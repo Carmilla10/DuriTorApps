@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "792868283110",
+    "firebase_url": "https://duritor-be2be-default-rtdb.firebaseio.com",
+    "project_id": "duritor-be2be",
+    "storage_bucket": "duritor-be2be.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:792868283110:android:bc4086764a755045e25127",
+        "android_client_info": {
+          "package_name": "com.example.duritor"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwrHzUeSqxPVu5bjq4bwlPbClkMgdGGRM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

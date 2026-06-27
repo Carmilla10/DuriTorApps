@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <color name="primary">#2E7D32</color>
+    <color name="primary_dark">#1B5E20</color>
+    <color name="primary_light">#A5D6A7</color>
+    <color name="secondary">#1565C0</color>
+    <color name="accent_orchard">#4E342E</color>
+    <color name="accent_tree">#00796B</color>
+    <color name="accent_profile">#6A1B9A</color>
+
+    <color name="background">#F1F5F0</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="surface_variant">#E8F0E6</color>
+
+    <color name="text_primary">#1B2E1A</color>
+    <color name="text_secondary">#5C6B5A</color>
+    <color name="text_hint">#8A9A88</color>
+
+    <color name="status_active">#2E7D32</color>
+    <color name="status_error">#C62828</color>
+    <color name="alert_active">#D32F2F</color>
+    <color name="divider">#DDE5DA</color>
+    <color name="image_placeholder">#E0E8DE</color>
+
+    <!-- Calendar day status colours -->
+    <color name="calendar_collected">#1565C0</color>
+    <color name="calendar_partial">#2E7D32</color>
+    <color name="calendar_pending">#8D6E4C</color>
+    <color name="calendar_no_activity">#E8F0E6</color>
+</resources>

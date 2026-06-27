@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:clipToPadding="false"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- Calendar section header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:layout_marginBottom="10dp">
+
+            <ImageView
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:contentDescription="@string/calendar_title"
+                android:src="@drawable/ic_calendar" />
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_weight="1"
+                android:text="@string/calendar_title"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:id="@+id/monthYearButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_calendar_month_picker"
+                android:clickable="true"
+                android:focusable="true"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="14dp"
+                android:paddingVertical="8dp">
+
+                <TextView
+                    android:id="@+id/monthYearLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:layout_marginStart="4dp"
+                    android:contentDescription="@string/calendar_select_month_year"
+                    android:src="@drawable/ic_arrow_dropdown"
+                    app:tint="@color/text_secondary" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Calendar card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            app:cardBackgroundColor="@color/surface"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="3dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingHorizontal="12dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="12dp">
+
+                <!-- Day-of-week headers -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:paddingBottom="8dp">
+
+                    <TextView style="@style/CalendarDayHeader" android:text="SUN" />
+                    <TextView style="@style/CalendarDayHeader" android:text="MON" />
+                    <TextView style="@style/CalendarDayHeader" android:text="TUE" />
+                    <TextView style="@style/CalendarDayHeader" android:text="WED" />
+                    <TextView style="@style/CalendarDayHeader" android:text="THU" />
+                    <TextView style="@style/CalendarDayHeader" android:text="FRI" />
+                    <TextView style="@style/CalendarDayHeader" android:text="SAT" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/divider" />
+
+                <!-- Calendar grid (filled by Java) -->
+                <LinearLayout
+                    android:id="@+id/calendarGridContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:orientation="vertical" />
+
+                <!-- Legend -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:layout_marginTop="12dp"
+                    android:background="@color/divider" />
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:gravity="center"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        style="@style/CalendarLegendItem"
+                        android:orientation="horizontal">
+                        <View style="@style/CalendarLegendDot" android:background="@drawable/bg_calendar_collected" />
+                        <TextView style="@style/CalendarLegendText" android:text="@string/calendar_legend_collected" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        style="@style/CalendarLegendItem"
+                        android:orientation="horizontal">
+                        <View style="@style/CalendarLegendDot" android:background="@drawable/bg_calendar_partial" />
+                        <TextView style="@style/CalendarLegendText" android:text="@string/calendar_legend_partial" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        style="@style/CalendarLegendItem"
+                        android:orientation="horizontal">
+                        <View style="@style/CalendarLegendDot" android:background="@drawable/bg_calendar_pending" />
+                        <TextView style="@style/CalendarLegendText" android:text="@string/calendar_legend_pending" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        style="@style/CalendarLegendItem"
+                        android:orientation="horizontal">
+                        <View style="@style/CalendarLegendDot" android:background="@drawable/bg_calendar_no_activity" />
+                        <TextView style="@style/CalendarLegendText" android:text="@string/calendar_legend_no_activity" />
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Events header row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/dateHeader"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/calendar_all_dates"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <Spinner
+                android:id="@+id/filterSpinner"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_input"
+                android:minWidth="120dp"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="4dp" />
+        </LinearLayout>
+
+        <!-- History list (height expanded in code for nested scroll) -->
+        <ListView
+            android:id="@+id/historyListView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:clipToPadding="false"
+            android:divider="@android:color/transparent"
+            android:dividerHeight="12dp"
+            android:nestedScrollingEnabled="false"
+            android:paddingBottom="16dp" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
