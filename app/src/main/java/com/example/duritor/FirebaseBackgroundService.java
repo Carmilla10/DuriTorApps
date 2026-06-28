@@ -27,6 +27,7 @@ public class FirebaseBackgroundService extends Service {
     private static final String DEFAULT_ORCHARD = "Orchard A";
     private static final String DEFAULT_REGION = "West Region";
     private String lastNotifiedEventId = "";
+    private boolean initialEventsLoaded = false;
 
     @Override
     public void onCreate() {
@@ -40,6 +41,31 @@ public class FirebaseBackgroundService extends Service {
         // Listen for new fall events
         databaseReference = FirebaseDatabase.getInstance().getReference("fallEvents");
 
+        databaseReference.addListenerForSingleValueEvent(new com.google.firebase.database.ValueEventListener() {
+            @Override
+            public void onDataChange(DataSnapshot snapshot) {
+                if (snapshot.exists() && snapshot.hasChildren()) {
+                    DataSnapshot lastChild = null;
+                    for (DataSnapshot child : snapshot.getChildren()) {
+                        lastChild = child;
+                    }
+                    if (lastChild != null && lastChild.getKey() != null) {
+                        lastNotifiedEventId = lastChild.getKey();
+                    }
+                }
+                initialEventsLoaded = true;
+                attachFallEventListener();
+            }
+
+            @Override
+            public void onCancelled(DatabaseError error) {
+                initialEventsLoaded = true;
+                attachFallEventListener();
+            }
+        });
+    }
+
+    private void attachFallEventListener() {
         databaseReference.addChildEventListener(new ChildEventListener() {
             @Override
             public void onChildAdded(DataSnapshot snapshot, String previousChildName) {
@@ -47,9 +73,7 @@ public class FirebaseBackgroundService extends Service {
             }
 
             @Override
-            public void onChildChanged(DataSnapshot snapshot, String previousChildName) {
-                tryNotifyFallEvent(snapshot);
-            }
+            public void onChildChanged(DataSnapshot snapshot, String previousChildName) {}
 
             @Override
             public void onChildRemoved(DataSnapshot snapshot) {}
@@ -69,6 +93,19 @@ public class FirebaseBackgroundService extends Service {
             return;
         }
 
+        String eventId = snapshot.getKey();
+        if (eventId == null || eventId.isEmpty()) {
+            return;
+        }
+
+        if (!initialEventsLoaded) {
+            return;
+        }
+
+        if (eventId.equals(lastNotifiedEventId)) {
+            return;
+        }
+
         String alert = snapshot.child("alert").getValue(String.class);
         String orchard = snapshot.child("orchardName").getValue(String.class);
         String region = snapshot.child("regionName").getValue(String.class);
@@ -76,11 +113,6 @@ public class FirebaseBackgroundService extends Service {
         if (alert == null) alert = "Durian Fall Detected!";
         if (orchard == null || orchard.isEmpty()) orchard = DEFAULT_ORCHARD;
         if (region == null || region.isEmpty()) region = DEFAULT_REGION;
-
-        String eventId = snapshot.getKey();
-        if (eventId == null || eventId.equals(lastNotifiedEventId)) {
-            return;
-        }
 
         lastNotifiedEventId = eventId;
         sendFallNotification(alert, orchard, region);

@@ -1,9 +1,6 @@
 package com.example.duritor;
 
 import android.Manifest;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
@@ -19,8 +16,6 @@ import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
-import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 
 import android.graphics.drawable.Drawable;
@@ -60,10 +55,10 @@ public class MainActivity extends DrawerActivity {
     private TextView orchardCountText, regionCountText, treeCountText;
     private ImageView capturedImageView;
     private DatabaseReference databaseReference;
+    private ValueEventListener fallEventsListener;
     private FirebaseAuth mAuth;
     private String currentDisplayedEventId = "";
     private String currentDisplayedPhotoUrl = "";
-    private static final String CHANNEL_ID = "fall_alert_channel";
     private String lastNotifiedEventId = "";
     private boolean initialFallEventsLoaded = false;
     // track downloads to avoid duplicate work
@@ -106,13 +101,15 @@ public class MainActivity extends DrawerActivity {
             }
         }
 
-        createNotificationChannel();
         startBackgroundNotificationService();
 
         databaseReference = FirebaseDatabase.getInstance().getReference("fallEvents");
-        databaseReference.addValueEventListener(new ValueEventListener() {
+        fallEventsListener = new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot snapshot) {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
                 if (snapshot.exists() && snapshot.hasChildren()) {
                     DataSnapshot latestEvent = findLatestEvent(snapshot);
                     if (latestEvent != null) {
@@ -126,6 +123,7 @@ public class MainActivity extends DrawerActivity {
                     }
                 } else {
                     runOnUiThread(() -> {
+                        if (isFinishing() || isDestroyed()) return;
                         alertText.setText("No fall detected");
                         timeText.setText("Waiting for fall...");
                         regionText.setText("...");
@@ -143,7 +141,8 @@ public class MainActivity extends DrawerActivity {
             public void onCancelled(DatabaseError error) {
                 Log.e("MainActivity", "Database error: " + error.getMessage());
             }
-        });
+        };
+        databaseReference.addValueEventListener(fallEventsListener);
 
         loadCounts();
 
@@ -151,48 +150,6 @@ public class MainActivity extends DrawerActivity {
                 startActivity(new Intent(MainActivity.this, HistoryActivity.class)));
         findViewById(R.id.mapButton).setOnClickListener(v ->
                 startActivity(new Intent(MainActivity.this, MapActivity.class)));
-    }
-
-    private void createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(
-                    CHANNEL_ID,
-                    "Fall Alerts",
-                    NotificationManager.IMPORTANCE_HIGH
-            );
-            NotificationManager manager = getSystemService(NotificationManager.class);
-            if (manager != null) {
-                manager.createNotificationChannel(channel);
-            }
-        }
-    }
-
-    private void sendLocalNotification(String title, String message) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
-                && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
-            Log.w("MainActivity", "Notification skipped because POST_NOTIFICATIONS is not granted");
-            return;
-        }
-
-        Intent intent = new Intent(this, MainActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        PendingIntent pendingIntent = PendingIntent.getActivity(
-                this, 0, intent,
-                PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
-        );
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
-                .setSmallIcon(R.drawable.logo)
-                .setContentTitle(title)
-                .setContentText(message)
-                .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
-                .setSubText(message)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setAutoCancel(true)
-                .setContentIntent(pendingIntent);
-
-        NotificationManagerCompat.from(this).notify((int) System.currentTimeMillis(), builder.build());
     }
 
     @Override
@@ -309,7 +266,15 @@ public class MainActivity extends DrawerActivity {
     }
 
     private void updateFallEvent(DataSnapshot snapshot, boolean isInitialLoad) {
+        if (isFinishing() || isDestroyed()) {
+            return;
+        }
+
         String eventId = snapshot.getKey();
+        if (eventId == null || eventId.isEmpty()) {
+            Log.w("MainActivity", "Skipping fall event with missing id");
+            return;
+        }
         currentDisplayedEventId = eventId;
 
         String alert = snapshot.child("alert").getValue(String.class);
@@ -340,6 +305,9 @@ public class MainActivity extends DrawerActivity {
         final boolean isNewEvent = !isInitialLoad && !finalEventId.equals(lastNotifiedEventId);
 
         runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
             alertText.setText(fullAlertMessage);
             alertText.setTextColor(ContextCompat.getColor(MainActivity.this, R.color.alert_active));
 
@@ -356,11 +324,7 @@ public class MainActivity extends DrawerActivity {
             loadFallImage(finalEventId, finalPhotoUrl);
 
             if (isNewEvent) {
-                String notificationTitle = "🚨 " + fullAlertMessage;
-                String notificationMessage = "Orchard: " + displayOrchard + "\nRegion: " + displayRegion;
                 Toast.makeText(MainActivity.this, fullAlertMessage, Toast.LENGTH_LONG).show();
-                Log.d("MainActivity", "Notification details: " + notificationMessage);
-                sendLocalNotification(notificationTitle, notificationMessage);
                 lastNotifiedEventId = finalEventId;
             }
         });
@@ -478,6 +442,7 @@ public class MainActivity extends DrawerActivity {
 
                 if (outFile.exists() && outFile.length() > 0) {
                     runOnUiThread(() -> {
+                        if (isFinishing() || isDestroyed()) return;
                         loadImageUrl(outFile.toURI().toString(), target);
                         photoStatusText.setText("Image loaded from cache");
                     });
@@ -493,9 +458,15 @@ public class MainActivity extends DrawerActivity {
     }
 
     private void loadImageUrl(String url, ImageView target) {
+        if (isFinishing() || isDestroyed() || target == null) {
+            return;
+        }
         String sanitizedUrl = sanitizeImageUrl(url);
+        if (sanitizedUrl == null || sanitizedUrl.isEmpty()) {
+            return;
+        }
         Log.d("MainActivity", "Loading image URL: " + sanitizedUrl);
-        Glide.with(this)
+        Glide.with(target)
                 .load(Uri.parse(sanitizedUrl))
                 .apply(new RequestOptions()
                         .diskCacheStrategy(DiskCacheStrategy.AUTOMATIC)
@@ -542,5 +513,13 @@ public class MainActivity extends DrawerActivity {
             startActivity(new Intent(this, LoginActivity.class));
             finish();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (databaseReference != null && fallEventsListener != null) {
+            databaseReference.removeEventListener(fallEventsListener);
+        }
+        super.onDestroy();
     }
 }
